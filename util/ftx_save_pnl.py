@@ -1,22 +1,12 @@
-import ccxt
+import pybotters
 import csv
 import logging
 import os
 import sys
 import pytz
-import json
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
-
-
-def balance():
-    return ftx.fetch_balance()
-
-
-def last_price():
-    tic = ftx.fetch_ticker(symbol)
-    return tic['last']
 
 
 if __name__ == "__main__":
@@ -25,11 +15,6 @@ if __name__ == "__main__":
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
     # パラメータ.
-    with open('config.json', 'r', encoding="utf-8") as f:
-        config = json.load(f)
-    ftx = ccxt.ftx()
-    ftx.apiKey = config['ftx_apiKey']
-    ftx.secret = config['ftx_secret']
     symbol = 'ETH-PERP'
 
     exchange_name = "ftx"
@@ -44,7 +29,8 @@ if __name__ == "__main__":
     failed_counter = 0
     while True:
         try:
-            balances = balance()
+            r = pybotters.get('https://ftx.com/api/wallet/all_balances', apis='apis.json')
+            balances = r.json()
             break
         except Exception as e:
             failed_counter += 1
@@ -54,14 +40,14 @@ if __name__ == "__main__":
                 raise e
             time.sleep(1)
 
-    if not balances['info']['success']:
+    if not balances['success']:
         sys.exit()
     usdValue = 0
-    for result in balances["info"]["result"]:
+    for result in balances["result"]['main']:
         usdValue += float(result["usdValue"])
     pnl = round(usdValue, 2)
 
-    last_price = last_price()
+    last_price = pybotters.get(f'https://ftx.com/api/futures/{symbol}').json()['result']['last']
     # ファイル出力.
     jst = timezone(timedelta(hours=9), "JST")
     now = datetime.now(pytz.UTC).replace(tzinfo=pytz.UTC).astimezone(jst)
