@@ -29,8 +29,7 @@ if __name__ == "__main__":
     failed_counter = 0
     while True:
         try:
-            r = pybotters.get('https://ftx.com/api/wallet/all_balances', apis='apis.json')
-            balances = r.json()
+            balances = pybotters.get('https://ftx.com/api/wallet/all_balances', apis='apis.json').json()
             break
         except Exception as e:
             failed_counter += 1
